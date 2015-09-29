@@ -1,0 +1,4 @@
+.*
+gocode
+webapp/perl/local
+rsync.sh
