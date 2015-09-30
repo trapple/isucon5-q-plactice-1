@@ -2,3 +2,4 @@
 gocode
 webapp/perl/local
 rsync.sh
+cpanfile.snapshot
