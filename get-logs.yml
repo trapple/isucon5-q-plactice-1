@@ -9,3 +9,10 @@
         dest: log/access.log
         mode: pull
       tags: nginx
+
+    - name: Mysql slow-log
+      synchronize:
+        src: /tmp/mysql-slow.log
+        dest: log/mysql-slow.log
+        mode: pull
+      tags: mysql
