@@ -18,4 +18,10 @@
     - name: start mysql
       service: name=mysql state=started
       tags: mysql
+      notify: Restart isuxi
+
+  handlers:
+    - name: Restart isuxi
+      service: name=isuxi.perl.service state=restarted
+
 
