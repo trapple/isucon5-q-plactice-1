@@ -21,3 +21,12 @@
   remote_user: isucon
   tasks:
     - synchronize: src=home/bench dest=/home/isucon/ perms=yes
+
+
+- name: Init settings
+  tags: install
+  hosts: all
+  remote_user: isucon
+  sudo: yes
+  tasks:
+    - user: name=isucon shell=/bin/bash
