@@ -1,5 +1,4 @@
 - name: Setting Up middlewares
-  tags: setting
   hosts: all
   remote_user: isucon
   sudo: yes
@@ -7,11 +6,22 @@
     - synchronize: src=server/etc/bashrc dest=/etc/bashrc
     - synchronize: src=home/.bashrc dest=./
       sudo: no
+
+    - name: Mysql config
+      synchronize:
+        src: server/etc/mysql/mysql.conf.d/mysqld.cnf
+        dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+      notify:
+        - Restart mysql
+        - Restart isuxi
+      tags: mysql
+
     - name: Nginx conf
       synchronize:
         src: server/etc/nginx/nginx.conf
         dest: /etc/nginx/nginx.conf
       notify: Restart nginx
+      tags: nginx
 
     - service: name=isuxi.ruby.service state=stopped
 
@@ -21,23 +31,31 @@
       notify:
         - Carton install
         - Restart isuxi
+      tags: isuxi
 
     - synchronize:
         src: home/webapp/perl
         dest: /home/isucon/webapp/perl
       notify: Restart isuxi
+      tags: isuxi
 
     - synchronize:
         src: server/etc/systemd/system/isuxi.perl.service
         dest: /etc/systemd/system/isuxi.perl.service
       notify: Restart isuxi
+      tags: service
 
 
   handlers:
+    - name: Restart mysql
+      service: name=mysql state=restarted
+
     - name: Restart isuxi
       service: name=isuxi.perl.service state=restarted
+
     - name: Restart nginx
       service: name=nginx state=restarted
+
     - name: Carton install
       sudo: no
       shell: /bin/bash -lc "carton install"
