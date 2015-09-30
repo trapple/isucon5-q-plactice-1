@@ -1,0 +1,11 @@
+- name: Get log
+  hosts: all
+  remote_user: isucon
+  sudo: yes
+  tasks:
+    - name: Nginx access log
+      synchronize:
+        src: /var/log/nginx/access.log
+        dest: log/access.log
+        mode: pull
+      tags: nginx
