@@ -9,7 +9,14 @@
         src: server/etc/systemd/system/isuxi.perl.service
         dest: /etc/systemd/system/isuxi.perl.service
       notify: Restart isuxi
+    - name: Nginx conf
+      synchronize:
+        src: server/etc/nginx/nginx.conf
+        dest: /etc/nginx/nginx.conf
+      notify: Restart nginx
 
   handlers:
     - name: Restart isuxi
       service: name=isuxi.perl.service state=restarted
+    - name: Restart nginx
+      service: name=nginx state=restarted
