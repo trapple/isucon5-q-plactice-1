@@ -1,4 +1,4 @@
-- name: Install middleware
+- name: Install middlewares
   tags: install
   hosts: all
   remote_user: isucon

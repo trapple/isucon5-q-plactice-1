@@ -1,0 +1,15 @@
+- name: Setting Up middlewares
+  tags: setting
+  hosts: all
+  remote_user: isucon
+  sudo: yes
+  tasks:
+    - service: name=isuxi.ruby.service state=stopped 
+    - synchronize:
+        src: server/etc/systemd/system/isuxi.perl.service
+        dest: /etc/systemd/system/isuxi.perl.service
+      notify: Restart isuxi
+
+  handlers:
+    - name: Restart isuxi
+      service: name=isuxi.perl.service state=restarted
