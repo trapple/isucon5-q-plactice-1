@@ -25,21 +25,26 @@
 
     - service: name=isuxi.ruby.service state=stopped
 
-    - synchronize:
+    - name: Upload cpanfile
+      synchronize:
         src: home/webapp/perl/cpanfile
         dest: /home/isucon/webapp/perl/cpanfile
       notify:
         - Carton install
         - Restart isuxi
+      sudo: no
       tags: isuxi
 
-    - synchronize:
-        src: home/webapp/perl
+    - name: Upload isuxi
+      synchronize:
+        src: home/webapp/perl/
         dest: /home/isucon/webapp/perl
       notify: Restart isuxi
+      sudo: no
       tags: isuxi
 
-    - synchronize:
+    - name: Upload isuxi.perl.service
+      synchronize:
         src: server/etc/systemd/system/isuxi.perl.service
         dest: /etc/systemd/system/isuxi.perl.service
       notify: Restart isuxi
