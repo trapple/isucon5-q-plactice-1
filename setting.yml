@@ -7,19 +7,40 @@
     - synchronize: src=server/etc/bashrc dest=/etc/bashrc
     - synchronize: src=home/.bashrc dest=./
       sudo: no
-    - service: name=isuxi.ruby.service state=stopped 
-    - synchronize:
-        src: server/etc/systemd/system/isuxi.perl.service
-        dest: /etc/systemd/system/isuxi.perl.service
-      notify: Restart isuxi
     - name: Nginx conf
       synchronize:
         src: server/etc/nginx/nginx.conf
         dest: /etc/nginx/nginx.conf
       notify: Restart nginx
 
+    - service: name=isuxi.ruby.service state=stopped
+
+    - synchronize:
+        src: home/webapp/perl/cpanfile
+        dest: /home/isucon/webapp/perl/cpanfile
+      notify:
+        - Carton install
+        - Restart isuxi
+
+    - synchronize:
+        src: home/webapp/perl
+        dest: /home/isucon/webapp/perl
+      notify: Restart isuxi
+
+    - synchronize:
+        src: server/etc/systemd/system/isuxi.perl.service
+        dest: /etc/systemd/system/isuxi.perl.service
+      notify: Restart isuxi
+
+
   handlers:
     - name: Restart isuxi
       service: name=isuxi.perl.service state=restarted
     - name: Restart nginx
       service: name=nginx state=restarted
+    - name: Carton install
+      sudo: no
+      shell: /bin/bash -lc "carton install"
+      args:
+        chdir: webapp/perl
+      notify: Restart isuxi
