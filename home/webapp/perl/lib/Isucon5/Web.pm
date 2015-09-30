@@ -212,16 +212,31 @@ SQL
         push @$comments_for_me, $comment;
     }
 
+    my $friends_query = 'SELECT * FROM relations WHERE one = ?';
+    my %friends = ();
+    my $friends = [];
+    for my $rel (@{db->select_all($friends_query, current_user()->{id})}) {
+        $friends{$rel->{another}} ||= do {
+            my $friend = get_user($rel->{another});
+            $rel->{account_name} = $friend->{account_name};
+            $rel->{nick_name} = $friend->{nick_name};
+            push @$friends, $rel;
+            $rel;
+        };
+    }
+
     my $entries_of_friends = [];
-    for my $entry (@{db->select_all('SELECT * FROM entries ORDER BY created_at DESC LIMIT 1000')}) {
-        next if (!is_friend($entry->{user_id}));
+    my $entries_of_friends_query = sprintf(
+      'SELECT * FROM entries WHERE %s ORDER BY created_at DESC LIMIT 10',
+      join(' OR ', map { sprintf('user_id = %s', $_->{another}) } @$friends)
+    );
+    for my $entry (@{db->select_all($entries_of_friends_query)}) {
         my ($title) = split(/\n/, $entry->{body});
         $entry->{title} = $title;
         my $owner = get_user($entry->{user_id});
         $entry->{account_name} = $owner->{account_name};
         $entry->{nick_name} = $owner->{nick_name};
         push @$entries_of_friends, $entry;
-        last if @$entries_of_friends+0 >= 10;
     }
 
     my $comments_of_friends = [];
@@ -239,19 +254,6 @@ SQL
         $comment->{nick_name} = $comment_owner->{nick_name};
         push @$comments_of_friends, $comment;
         last if @$comments_of_friends+0 >= 10;
-    }
-
-    my $friends_query = 'SELECT * FROM relations WHERE one = ?';
-    my %friends = ();
-    my $friends = [];
-    for my $rel (@{db->select_all($friends_query, current_user()->{id})}) {
-        $friends{$rel->{another}} ||= do {
-            my $friend = get_user($rel->{another});
-            $rel->{account_name} = $friend->{account_name};
-            $rel->{nick_name} = $friend->{nick_name};
-            push @$friends, $rel;
-            $rel;
-        };
     }
 
     my $query = <<SQL;
