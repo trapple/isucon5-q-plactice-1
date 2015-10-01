@@ -19,7 +19,8 @@
       notify: Restart nginx
       tags: nginx
 
-    - service: name=isuxi.ruby.service state=stopped
+    - service: name=isuxi.ruby.service state=stopped enabled=no
+    - service: name=isuxi.perl.service state=started enabled=yes
 
     - name: Upload cpanfile
       synchronize:
