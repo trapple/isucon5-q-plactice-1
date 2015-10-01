@@ -6,6 +6,7 @@ use utf8;
 use Kossy;
 use DBIx::Sunny;
 use Encode;
+use Data::Dumper;
 
 my $db;
 sub db {
@@ -224,13 +225,11 @@ SQL
             $rel;
         };
     }
+    my @firend_ids = map { $_->{another} } @$friends;
 
     my $entries_of_friends = [];
-    my $entries_of_friends_query = sprintf(
-      'SELECT * FROM entries WHERE %s ORDER BY created_at DESC LIMIT 10',
-      join(' OR ', map { sprintf('user_id = %s', $_->{another}) } @$friends)
-    );
-    for my $entry (@{db->select_all($entries_of_friends_query)}) {
+    my $entries_of_friends_query = 'SELECT * FROM entries WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10';
+    for my $entry (@{db->select_all($entries_of_friends_query, \@firend_ids)}) {
         my ($title) = split(/\n/, $entry->{body});
         $entry->{title} = $title;
         my $owner = get_user($entry->{user_id});
