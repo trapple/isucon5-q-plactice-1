@@ -29,3 +29,7 @@
   sudo: yes
   tasks:
     - user: name=isucon shell=/bin/bash
+    - synchronize: src=server/etc/bashrc dest=/etc/bashrc
+    - synchronize: src=home/.bashrc dest=./
+      sudo: no
+
