@@ -12,6 +12,7 @@
         - wget
         - openjdk-8-jdk
         - jq
+        - sysstat
 
 
 - name: Upload Bench
