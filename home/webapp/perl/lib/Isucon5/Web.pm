@@ -361,7 +361,7 @@ get '/diary/entries/:account_name' => [qw(set_global authenticated)] => sub {
         my ($title, $content) = split(/\n/, $entry->{body}, 2);
         $entry->{title} = $title;
         $entry->{content} = $content;
-        $entry->{comment_count} = db->select_one('SELECT COUNT(*) AS c FROM comments WHERE entry_id = ?', $entry->{id});
+        $entry->{comment_count} = $entry->{comments_count};
         push @$entries, $entry;
     }
     mark_footprint($owner->{id});
