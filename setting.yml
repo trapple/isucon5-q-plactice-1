@@ -44,13 +44,18 @@
       synchronize:
         src: server/etc/systemd/system/isuxi.perl.service
         dest: /etc/systemd/system/isuxi.perl.service
-      notify: Restart isuxi
+      notify:
+        - Reload daemon
+        - Restart isuxi
       tags: service
 
 
   handlers:
     - name: Restart mysql
       service: name=mysql state=restarted
+
+    - name: Reload daemon
+      command: systemctl daemon-reload
 
     - name: Restart isuxi
       service: name=isuxi.perl.service state=restarted
