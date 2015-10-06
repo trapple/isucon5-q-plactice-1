@@ -23,5 +23,7 @@ builder {
       httponly => 1,
       cookie_name => 'isuxi_session',
       keep_empty;
+    #enable 'Profiler::NYTProf',
+    #  enprofiling_result_dir => sub { '/home/isucon/webapp/perl/nytprof' };
     $app;
 };

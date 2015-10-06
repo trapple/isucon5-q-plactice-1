@@ -11,3 +11,5 @@ requires "JSON::XS";
 requires "Plack::Middleware::Session::Simple";
 requires "Cache::Memcached::Fast";
 requires "Sereal";
+requires "Devel::NYTProf";
+requires "Plack::Middleware::Profiler::NYTProf";
