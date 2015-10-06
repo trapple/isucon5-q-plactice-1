@@ -13,6 +13,9 @@
         - openjdk-8-jdk
         - jq
         - sysstat
+        - libdbi-perl
+        - percona-toolkit
+        - memcached
 
 
 - name: Upload Bench

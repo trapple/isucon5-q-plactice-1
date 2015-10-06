@@ -6,3 +6,8 @@ requires "Starman";
 requires "Plack::Session";
 requires "Gazelle";
 requires "Server::Starter";
+requires "URL::Encode::XS";
+requires "JSON::XS";
+requires "Plack::Middleware::Session::Simple";
+requires "Cache::Memcached::Fast";
+requires "Sereal";
