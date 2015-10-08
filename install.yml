@@ -4,6 +4,7 @@
   remote_user: isucon
   sudo: yes
   tasks:
+    - user: name=isucon home=/home/isucon shell=/bin/bash
     - apt:
         name: "{{item}}"
         update_cache: yes
