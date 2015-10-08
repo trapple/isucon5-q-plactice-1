@@ -4,6 +4,9 @@
   remote_user: isucon
   sudo: yes
   tasks:
+    - synchronize: src=server/etc/bashrc dest=/etc/bashrc
+    - synchronize: src=home/.bashrc dest=./
+      sudo: no
     - service: name=isuxi.ruby.service state=stopped 
     - synchronize:
         src: server/etc/systemd/system/isuxi.perl.service
