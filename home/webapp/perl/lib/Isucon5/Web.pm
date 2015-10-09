@@ -233,10 +233,8 @@ SQL
     my @firend_ids = map { $_->{another} } @$friends;
 
     my $entries_of_friends = [];
-    my $entries_of_friends_query = 'SELECT * FROM entries WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10';
+    my $entries_of_friends_query = 'SELECT id, user_id, SUBSTRING_INDEX(body, "\n", 1) as title FROM entries WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10';
     for my $entry (@{db->select_all($entries_of_friends_query, \@firend_ids)}) {
-        my ($title) = split(/\n/, $entry->{body});
-        $entry->{title} = $title;
         my $owner = get_user($entry->{user_id});
         $entry->{account_name} = $owner->{account_name};
         $entry->{nick_name} = $owner->{nick_name};
