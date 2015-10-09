@@ -203,11 +203,10 @@ get '/' => [qw(set_global authenticated)] => sub {
     }
 
     my $comments_for_me_query = <<SQL;
-SELECT c.id AS id, c.entry_id AS entry_id, c.user_id AS user_id, c.comment AS comment, c.created_at AS created_at
-FROM comments c
-JOIN entries e ON c.entry_id = e.id
-WHERE e.user_id = ?
-ORDER BY c.id DESC
+SELECT *
+FROM comments
+WHERE entry_user_id = ?
+ORDER BY id DESC
 LIMIT 10
 SQL
     my $comments_for_me = [];
@@ -243,12 +242,10 @@ SQL
     }
 
     my $comments_of_friends = [];
-    for my $comment (@{db->select_all('SELECT * FROM comments ORDER BY id DESC LIMIT 1000')}) {
-        next if (!grep { $comment->{user_id} == $_ } @friend_ids);
-        my $entry = db->select_row('SELECT * FROM entries WHERE id = ?', $comment->{entry_id});
-        $entry->{is_private} = ($entry->{private} == 1);
-        next if ($entry->{is_private} && !permitted($entry->{user_id}));
-        my $entry_owner = get_user($entry->{user_id});
+    my $comments_of_friends_query = 'SELECT user_id, entry_id, created_at, comment, entry_user_id, entry_private FROM comments WHERE user_id IN (?) and entry_private = 0 ORDER BY id DESC LIMIT 10';
+    for my $comment (@{db->select_all($comments_of_friends_query, \@friend_ids)}) {
+        my $entry_owner = get_user($comment->{entry_user_id});
+        my $entry = {};
         $entry->{account_name} = $entry_owner->{account_name};
         $entry->{nick_name} = $entry_owner->{nick_name};
         $comment->{entry} = $entry;
@@ -256,7 +253,6 @@ SQL
         $comment->{account_name} = $comment_owner->{account_name};
         $comment->{nick_name} = $comment_owner->{nick_name};
         push @$comments_of_friends, $comment;
-        last if @$comments_of_friends+0 >= 10;
     }
 
     my $query = <<SQL;
@@ -426,9 +422,9 @@ post '/diary/comment/:entry_id' => [qw(set_global authenticated)] => sub {
     if ($entry->{is_private} && !permitted($entry->{user_id})) {
         abort_permission_denied();
     }
-    my $query = 'INSERT INTO comments (entry_id, user_id, comment) VALUES (?,?,?)';
+    my $query = 'INSERT INTO comments (entry_id, user_id, comment, entry_user_id, entry_private) VALUES (?,?,?,?,?)';
     my $comment = $c->req->param('comment');
-    db->query($query, $entry->{id}, current_user()->{id}, $comment);
+    db->query($query, $entry->{id}, current_user()->{id}, $comment, $entry->{user_id}, $entry->{is_private});
     redirect('/diary/entry/'.$entry->{id});
 };
 
@@ -453,17 +449,21 @@ SQL
 
 get '/friends' => [qw(set_global authenticated)] => sub {
     my ($self, $c) = @_;
-    my $query = 'SELECT * FROM relations WHERE one = ?';
+    my $query = 'SELECT another, created_at FROM relations WHERE one = ?';
     my %friends = ();
     my $friends = [];
     for my $rel (@{db->select_all($query, current_user()->{id})}) {
-        $friends{$rel->{another}} ||= do {
-            my $friend = get_user($rel->{another});
-            $rel->{account_name} = $friend->{account_name};
-            $rel->{nick_name} = $friend->{nick_name};
-            push @$friends, $rel;
-            $rel;
-        };
+      my $friend = get_user($rel->{another});
+      $rel->{account_name} = $friend->{account_name};
+      $rel->{nick_name} = $friend->{nick_name};
+      push @$friends, $rel;
+      #$friends{$rel->{another}} ||= do {
+      #    my $friend = get_user($rel->{another});
+      #    $rel->{account_name} = $friend->{account_name};
+      #    $rel->{nick_name} = $friend->{nick_name};
+      #    push @$friends, $rel;
+      #    $rel;
+      #};
     }
     #my $friends = [ sort { $a->{created_at} lt $b->{created_at} } values(%friends) ];
     $c->render('friends.tx', { friends => $friends });
