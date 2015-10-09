@@ -230,11 +230,11 @@ SQL
             $rel;
         };
     }
-    my @firend_ids = map { $_->{another} } @$friends;
+    my @friend_ids = map { $_->{another} } @$friends;
 
     my $entries_of_friends = [];
     my $entries_of_friends_query = 'SELECT id, user_id, SUBSTRING_INDEX(body, "\n", 1) as title FROM entries WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10';
-    for my $entry (@{db->select_all($entries_of_friends_query, \@firend_ids)}) {
+    for my $entry (@{db->select_all($entries_of_friends_query, \@friend_ids)}) {
         my $owner = get_user($entry->{user_id});
         $entry->{account_name} = $owner->{account_name};
         $entry->{nick_name} = $owner->{nick_name};
@@ -242,8 +242,8 @@ SQL
     }
 
     my $comments_of_friends = [];
-    for my $comment (@{db->select_all('SELECT * FROM comments ORDER BY created_at DESC LIMIT 1000')}) {
-        next if (!is_friend($comment->{user_id}));
+    for my $comment (@{db->select_all('SELECT * FROM comments ORDER BY id DESC LIMIT 1000')}) {
+        next if (!grep { $comment->{user_id} == $_ } @friend_ids);
         my $entry = db->select_row('SELECT * FROM entries WHERE id = ?', $comment->{entry_id});
         $entry->{is_private} = ($entry->{private} == 1);
         next if ($entry->{is_private} && !permitted($entry->{user_id}));
