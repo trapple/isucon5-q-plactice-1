@@ -32,3 +32,5 @@ long_query_time=0
 innodb_buffer_pool_size=2G
 innodb_flush_log_at_trx_commit=0
 innodb_flush_method=O_DIRECT
+
+innodb_buffer_pool_load_at_startup=ON
