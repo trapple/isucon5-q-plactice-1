@@ -7,6 +7,8 @@ use Kossy;
 use DBIx::Sunny;
 use Encode;
 use Data::Dumper;
+use Cache::Memcached::Fast;
+use Sereal;
 use 5.020;
 
 sub db {
@@ -30,7 +32,24 @@ sub db {
     };
 }
 
-my ($SELF, $C, $USER);
+my $memd;
+sub memd {
+  $memd ||= do {
+    my $decoder = Sereal::Decoder->new();
+    my $encoder = Sereal::Encoder->new();
+    Cache::Memcached::Fast->new({
+      servers => [ { address => "localhost:11211",noreply=>0} ],
+      serialize_methods => [ sub { $encoder->encode($_[0])}, 
+                             sub { $decoder->decode($_[0])} ],
+      max_size => 1024 * 1024 * 500,
+      utf8 => 1,
+      close_on_error => 1,
+      io_timeout => 0,
+    });
+  };
+}
+
+my ($SELF, $C, $USER_FROM_ID, $USER_FROM_ACCOUNT);
 
 sub session {
     $C->stash->{session};
@@ -92,18 +111,14 @@ sub current_user {
 
 sub get_user {
     my ($user_id) = @_;
-    unless ($USER) {
-      $USER = {};
-      %$USER = map { $_->{id} => $_ } @{db->select_all('SELECT * FROM users')};
-    }
-    my $user = $USER->{$user_id};
+    my $user = memd()->get('id_' . $user_id);
     abort_content_not_found() if (!$user);
     return $user;
 }
 
 sub user_from_account {
     my ($account_name) = @_;
-    my $user = db->select_row('SELECT * FROM users WHERE account_name = ?', $account_name);
+    my $user = memd()->get('account_name_' . $account_name);
     abort_content_not_found() if (!$user);
     return $user;
 }
@@ -319,7 +334,7 @@ get '/profile/:account_name' => [qw(set_global authenticated)] => sub {
 post '/profile/:account_name' => [qw(set_global authenticated)] => sub {
     my ($self, $c) = @_;
     my $account_name = $c->args->{account_name};
-    if ($account_name != current_user()->{account_name}) {
+    if ($account_name ne current_user()->{account_name}) {
         abort_permission_denied();
     }
     my $first_name =  $c->req->param('first_name');
@@ -486,6 +501,13 @@ get '/initialize' => sub {
     db->query("DELETE FROM footprints WHERE id > 500000");
     db->query("DELETE FROM entries WHERE id > 500000");
     db->query("DELETE FROM comments WHERE id > 1500000");
+
+    my @users = @{db->select_all('SELECT * FROM users')};
+    my @user_from_id = map { ['id_' . $_->{id}, $_] } @users;
+    my @user_from_account = map { ['account_name_' . $_->{account_name}, $_] } @users;
+    memd()->set_multi(@user_from_id);
+    memd()->set_multi(@user_from_account);
+    return 1;
 };
 
 1;
