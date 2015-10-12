@@ -25,6 +25,31 @@
   tasks:
     - synchronize: src=home/bench dest=/home/isucon/ perms=yes
 
+- name: Upload Cpanfile
+  remote_user: isucon
+  hosts: all
+  tasks:
+    - name: Upload cpanfile
+      synchronize:
+        src: home/webapp/perl/cpanfile
+        dest: /home/isucon/webapp/perl/cpanfile
+      notify:
+        - Carton install
+      sudo: no
+      tags: 
+        - install
+        - isuxi
+  handlers:
+    - name: Carton install
+      sudo: no
+      shell: /bin/bash -lc "carton install"
+      args:
+        chdir: webapp/perl
+      notify: Restart isuxi
+    - name: Restart isuxi
+      sudo: yes
+      service: name=isuxi.perl.service state=restarted
+
 
 - name: Init settings
   tags: install

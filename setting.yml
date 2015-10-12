@@ -22,16 +22,6 @@
     - service: name=isuxi.ruby.service state=stopped enabled=no
     - service: name=isuxi.perl.service state=started enabled=yes
 
-    - name: Upload cpanfile
-      synchronize:
-        src: home/webapp/perl/cpanfile
-        dest: /home/isucon/webapp/perl/cpanfile
-      notify:
-        - Carton install
-        - Restart isuxi
-      sudo: no
-      tags: isuxi
-
     - name: Upload isuxi
       synchronize:
         src: home/webapp/perl/
@@ -63,9 +53,3 @@
     - name: Restart nginx
       service: name=nginx state=restarted
 
-    - name: Carton install
-      sudo: no
-      shell: /bin/bash -lc "carton install"
-      args:
-        chdir: webapp/perl
-      notify: Restart isuxi
