@@ -19,6 +19,13 @@
       notify: Restart nginx
       tags: nginx
 
+    - name: Memcached conf
+      synchronize:
+        src: server/etc/memcached.conf
+        dest: /etc/memcached.conf
+      notify: Restart memcached
+      tags: memcached
+
     - service: name=isuxi.ruby.service state=stopped enabled=no
     - service: name=isuxi.perl.service state=started enabled=yes
 
@@ -53,3 +60,5 @@
     - name: Restart nginx
       service: name=nginx state=restarted
 
+    - name: Restart memcached
+      service: name=memcached state=restarted
