@@ -7,10 +7,10 @@ use Kossy;
 use DBIx::Sunny;
 use Encode;
 use Data::Dumper;
+use 5.020;
 
-my $db;
 sub db {
-    $db ||= do {
+  state $db ||= do {
         my %db = (
             host => $ENV{ISUCON5_DB_HOST} || 'localhost',
             port => $ENV{ISUCON5_DB_PORT} || 3306,
