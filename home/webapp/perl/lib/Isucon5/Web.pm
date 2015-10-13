@@ -32,9 +32,8 @@ sub db {
     };
 }
 
-my $memd;
 sub memd {
-  $memd ||= do {
+  state $memd ||= do {
     my $decoder = Sereal::Decoder->new();
     my $encoder = Sereal::Encoder->new();
     Cache::Memcached::Fast->new({
