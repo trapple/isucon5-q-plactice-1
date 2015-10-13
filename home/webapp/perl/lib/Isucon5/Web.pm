@@ -196,13 +196,7 @@ get '/' => [qw(set_global authenticated)] => sub {
     my $profile = db->select_row('SELECT * FROM profiles WHERE user_id = ?', current_user()->{id});
 
     my $entries_query = 'SELECT id, SUBSTRING_INDEX(body, "\n", 1) as title FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5';
-    my $entries = [];
-    for my $entry (@{db->select_all($entries_query, current_user()->{id})}) {
-        my ($title, $content) = split(/\n/, $entry->{body}, 2);
-        $entry->{title} = $title;
-        $entry->{content} = $content;
-        push @$entries, $entry;
-    }
+    my $entries = db->select_all($entries_query, current_user()->{id});
 
     my $comments_for_me_query = <<SQL;
 SELECT *
