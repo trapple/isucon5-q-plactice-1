@@ -183,12 +183,28 @@ filter 'set_global' => sub {
     }
 };
 
-get '/login' => sub {
+get '/login' => \&get_login;
+post '/login' => [qw(set_global)] => \&post_login;
+get '/logout' => [qw(set_global)] => \&get_logout;
+get '/' => [qw(set_global authenticated)] => \&get_root;
+get '/profile/:account_name' => [qw(set_global authenticated)] => \&get_profile_account_name;
+post '/profile/:account_name' => [qw(set_global authenticated)] => \&post_profile_account_name;
+get '/diary/entries/:account_name' => [qw(set_global authenticated)] => \&get_diary_entries_account_name;
+get '/diary/entry/:entry_id' => [qw(set_global authenticated)] => \&get_diary_entry_entry_id;
+post '/diary/entry' => [qw(set_global authenticated)] => \&post_diary_entry;
+post '/diary/comment/:entry_id' => [qw(set_global authenticated)] => \&post_diary_comment_entry_id;
+get '/footprints' => [qw(set_global authenticated)] => \&get_footprints;
+get '/friends' => [qw(set_global authenticated)] => \&get_friends;
+post '/friends/:account_name' => [qw(set_global authenticated)] => \&post_friends_account_name;
+get '/initialize' => \&get_initialize;
+
+
+sub get_login {
     my ($self, $c) = @_;
     $c->render('login.tx', { message => '高負荷に耐えられるSNSコミュニティサイトへようこそ!' });
-};
+}
 
-post '/login' => [qw(set_global)] => sub {
+sub post_login {
     my ($self, $c) = @_;
     my $email = $c->req->param("email");
     my $password = $c->req->param("password");
@@ -196,13 +212,13 @@ post '/login' => [qw(set_global)] => sub {
     redirect('/');
 };
 
-get '/logout' => [qw(set_global)] => sub {
+sub get_logout {
     my ($self, $c) = @_;
     session()->{user_id} = undef;
     redirect('/login');
 };
 
-get '/' => [qw(set_global authenticated)] => sub {
+sub get_root {
     my ($self, $c) = @_;
 
     my $profile = db->select_row('SELECT * FROM profiles WHERE user_id = ?', current_user()->{id});
@@ -298,12 +314,10 @@ SQL
     $c->render('index.tx', $locals);
 };
 
-get '/profile/:account_name' => [qw(set_global authenticated)] => sub {
+sub get_profile_account_name {
     my ($self, $c) = @_;
     my $account_name = $c->args->{account_name};
-    warn 'get /profile/'.$account_name;
     my $owner = user_from_account($account_name);
-    warn Dumper $owner;
     my $prof = db->select_row('SELECT * FROM profiles WHERE user_id = ?', $owner->{id});
     $prof = {} if (!$prof);
     my $query;
@@ -333,7 +347,7 @@ get '/profile/:account_name' => [qw(set_global authenticated)] => sub {
     $c->render('profile.tx', $locals);
 };
 
-post '/profile/:account_name' => [qw(set_global authenticated)] => sub {
+sub post_profile_account_name {
     my ($self, $c) = @_;
     my $account_name = $c->args->{account_name};
     if ($account_name ne current_user()->{account_name}) {
@@ -359,11 +373,10 @@ INSERT INTO profiles (user_id,first_name,last_name,sex,birthday,pref) VALUES (?,
 SQL
         db->query($query, current_user()->{id}, $first_name, $last_name, $sex, $birthday, $pref);
     }
-    warn 'post /profile/'. $account_name;
     redirect('/profile/'.$account_name);
 };
 
-get '/diary/entries/:account_name' => [qw(set_global authenticated)] => sub {
+sub get_diary_entries_account_name {
     my ($self, $c) = @_;
     my $account_name = $c->args->{account_name};
     my $owner = user_from_account($account_name);
@@ -391,7 +404,7 @@ get '/diary/entries/:account_name' => [qw(set_global authenticated)] => sub {
     $c->render('entries.tx', $locals);
 };
 
-get '/diary/entry/:entry_id' => [qw(set_global authenticated)] => sub {
+sub get_diary_entry_entry_id {
     my ($self, $c) = @_;
     my $entry_id = $c->args->{entry_id};
     my $entry = db->select_row('SELECT * FROM entries WHERE id = ?', $entry_id);
@@ -420,7 +433,7 @@ get '/diary/entry/:entry_id' => [qw(set_global authenticated)] => sub {
     $c->render('entry.tx', $locals);
 };
 
-post '/diary/entry' => [qw(set_global authenticated)] => sub {
+sub post_diary_entry {
     my ($self, $c) = @_;
     my $query = 'INSERT INTO entries (user_id, private, body) VALUES (?,?,?)';
     my $title = $c->req->param('title');
@@ -431,7 +444,7 @@ post '/diary/entry' => [qw(set_global authenticated)] => sub {
     redirect('/diary/entries/'.current_user()->{account_name});
 };
 
-post '/diary/comment/:entry_id' => [qw(set_global authenticated)] => sub {
+sub post_diary_comment_entry_id {
     my ($self, $c) = @_;
     my $entry_id = $c->args->{entry_id};
     my $entry = db->select_row('SELECT * FROM entries WHERE id = ?', $entry_id);
@@ -446,7 +459,7 @@ post '/diary/comment/:entry_id' => [qw(set_global authenticated)] => sub {
     redirect('/diary/entry/'.$entry->{id});
 };
 
-get '/footprints' => [qw(set_global authenticated)] => sub {
+sub get_footprints {
     my ($self, $c) = @_;
     my $query = <<SQL;
 SELECT user_id, owner_id, date, created_at as updated
@@ -465,7 +478,7 @@ SQL
     $c->render('footprints.tx', { footprints => $footprints });
 };
 
-get '/friends' => [qw(set_global authenticated)] => sub {
+sub get_friends {
     my ($self, $c) = @_;
     my $query = 'SELECT another, created_at FROM relations WHERE one = ?';
     my %friends = ();
@@ -487,7 +500,7 @@ get '/friends' => [qw(set_global authenticated)] => sub {
     $c->render('friends.tx', { friends => $friends });
 };
 
-post '/friends/:account_name' => [qw(set_global authenticated)] => sub {
+sub post_friends_account_name {
     my ($self, $c) = @_;
     my $account_name = $c->args->{account_name};
     if (!is_friend_account($account_name)) {
@@ -498,7 +511,7 @@ post '/friends/:account_name' => [qw(set_global authenticated)] => sub {
     }
 };
 
-get '/initialize' => sub {
+sub get_initialize {
     my ($self, $c) = @_;
     db->query("DELETE FROM relations WHERE id > 500000");
     db->query("DELETE FROM footprints WHERE id > 500000");
