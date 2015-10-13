@@ -30,7 +30,7 @@ sub db {
     };
 }
 
-my ($SELF, $C, $USER);
+my ($SELF, $C, $USER_FROM_ID, $USER_FROM_ACCOUNT);
 
 sub session {
     $C->stash->{session};
@@ -92,18 +92,22 @@ sub current_user {
 
 sub get_user {
     my ($user_id) = @_;
-    unless ($USER) {
-      $USER = {};
-      %$USER = map { $_->{id} => $_ } @{db->select_all('SELECT * FROM users')};
+    unless ($USER_FROM_ID) {
+      $USER_FROM_ID = {};
+      %$USER_FROM_ID = map { $_->{id} => $_ } @{db->select_all('SELECT * FROM users')};
     }
-    my $user = $USER->{$user_id};
+    my $user = $USER_FROM_ID->{$user_id};
     abort_content_not_found() if (!$user);
     return $user;
 }
 
 sub user_from_account {
     my ($account_name) = @_;
-    my $user = db->select_row('SELECT * FROM users WHERE account_name = ?', $account_name);
+    unless ($USER_FROM_ACCOUNT) {
+      $USER_FROM_ACCOUNT = {};
+      %$USER_FROM_ACCOUNT = map { $_->{account_name} => $_ } @{db->select_all('SELECT * FROM users')};
+    }
+    my $user = $USER_FROM_ACCOUNT->{$account_name};
     abort_content_not_found() if (!$user);
     return $user;
 }
