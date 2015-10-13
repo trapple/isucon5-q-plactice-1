@@ -501,8 +501,8 @@ get '/initialize' => sub {
     my @users = @{db->select_all('SELECT * FROM users')};
     my @user_from_id = map { ['id_' . $_->{id}, $_] } @users;
     my @user_from_account = map { ['account_name_' . $_->{account_name}, $_] } @users;
-    memd()->set_multi(@user_from_id);
-    memd()->set_multi(@user_from_account);
+    memd()->set_multi(@user_from_id) || die "Write memcached fail: $!";
+    memd()->set_multi(@user_from_account) || die "Write memcached fail: $!";
     return 1;
 };
 
