@@ -38,7 +38,7 @@ sub memd {
     my $decoder = Sereal::Decoder->new();
     my $encoder = Sereal::Encoder->new();
     Cache::Memcached::Fast->new({
-      servers => [ { address => "localhost:11211",noreply=>0} ],
+      servers => [ { address => "/dev/shm/memcached.sock", noreply => 1} ],
       serialize_methods => [ sub { $encoder->encode($_[0])}, 
                              sub { $decoder->decode($_[0])} ],
       max_size => 1024 * 1024 * 500,
